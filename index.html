@@ -1,0 +1,57 @@
+<html>
+    <body>
+        <p id="statusCv">OpenCv is loading...</p>\
+        <p id="statusTensor">Tensorflow is loading</p>
+        <img id="imageSrc" alt="No Image" />
+        <div class="caption">imageSrc <input type="file" id="fileInput" name="file"/>
+        </div>
+        <p id="outputo"></p> 
+    </body>
+    <script type="text/javascript">
+        function onOpenCvReady(){
+           document.getElementById("statusCv").innerHTML="OpenCv is ready";
+        }
+        function onTensorReady(){
+            document.getElementById("statusTensor").innerHTML="Tensorflow is ready";
+        }
+    </script>
+    <script async src="opencv.js" onload="onOpenCvReady();" type="text/javascript">
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@2.0.0/dist/tf.min.js" onload="onTensorReady();"></script>
+    <script type="module">
+        
+        
+        let imgElement = document.getElementById('imageSrc');
+        let inputElement = document.getElementById('fileInput');     
+        inputElement.addEventListener('change', (e) => {
+                imgElement.src = URL.createObjectURL(e.target.files[0]);
+        }, false);
+        imgElement.onload=async function(){
+            
+            const model =await tf.loadLayersModel("/gogobavo1/model.json");
+            
+            
+            function preprocess(img)
+            {
+
+                //convert the image data to a tensor 
+                let tensor = tf.browser.fromPixels(img);
+                //resize to 50 X 50
+                const resized = tf.image.resizeBilinear(tensor, [200,200]).toFloat();
+                // Normalize the image 
+                const offset = tf.scalar(255.0);
+                const normalized = tf.scalar(1.0).sub(resized.div(offset));
+                //We add a dimension to get a batch shape 
+                const batched = normalized.expandDims(0)
+                return batched
+
+            }
+            
+            const prediction = model.predict(preprocess(imgElement)).dataSync();
+            document.getElementById("outputo").innerHTML=prediction;
+        }
+        // for example
+        
+    </script>
+    
+</html>
